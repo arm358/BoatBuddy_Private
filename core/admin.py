@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Marker, MapMode
+from .models import *
 
 class MarkerAdmin(admin.ModelAdmin):
     model = Marker
@@ -7,3 +7,5 @@ class MarkerAdmin(admin.ModelAdmin):
 
 admin.site.register(Marker, MarkerAdmin)
 admin.site.register(MapMode)
+admin.site.register(Track)
+admin.site.register(TrackPoint)

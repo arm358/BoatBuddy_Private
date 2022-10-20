@@ -29,6 +29,8 @@ select {
 .has-text-purple {
   color: #e6369c !important;
 }
+
+
 .table th {
   vertical-align: middle;
 }
@@ -84,11 +86,19 @@ select {
 }
 .cog {
   position: absolute; 
-  right:2.8%;
+  right:15px;
   bottom:4%;
   text-align: right; 
   z-index: 999;
   color:#03045e;
+}
+.refresh {
+  position: absolute; 
+  right:65px;
+  bottom:4%;
+  text-align: right; 
+  z-index: 999;
+  color:#03fca1;
 }
 .route {
   position: absolute; 

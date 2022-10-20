@@ -361,6 +361,32 @@ def custom_marker_builder(markers):
     
     return custom_markers
 
+def custom_track_builder(saved_track, name):
+    custom_track = {
+        "type": "FeatureCollection",
+        "name": f"{name}",
+        "features": [],
+    }
+    x = {
+    "type": "Feature",
+    "geometry": {
+        "type": "LineString",
+        "coordinates": [
+
+        ]
+    }
+    }
+    for track in saved_track:
+        x["geometry"]["coordinates"].append([float(track["lon"]), float(track["lat"])])
+        
+    
+    custom_track["features"].append(x)
+
+
+
+    return custom_track
+
+
 
 ### --- Message Senders --- ###
 

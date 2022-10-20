@@ -409,7 +409,7 @@
             </div>
         </div>
 
-        <!-- Tide Data Upload -->
+        <!-- Other Config Options -->
         <div class="columns is-mobile is-multiline is-centered">
             <div class="column has-background-main">
                 <div class="panel">
@@ -424,26 +424,34 @@
                                         <i class="fas fa-arrows-alt-v has-text-info is-size-6 mr-2"></i><span
                                             class="subtitle">Tide Data Upload</span>
                                     </div>
-                                    <form hx-post="{% url 'tidedata' %}" hx-swap="outerHTML" hx-target="#tide-config-response" hx-confirm="Please ensure the ethernet cable is plugged in to be able to download NOAA Tide data!">
-                                            <label class="label" for="station">NOAA Station ID</label>
-                                            <input class="input" type="number" name="station" id="station">
-                                            <small class="is-size-7 has-text-grey"><a target="_blank" href="https://tidesandcurrents.noaa.gov/map/index.html">via NOAA Tides and Currents</a></small>
-                                            <label class="label" for="begin">Begin Date</label>
-                                            <input class="input" min="2020-01-01" max="2050-12-31" type="date" name="begin" id="begin">
-                                            <label class="label" for="end">End Date</label>
-                                            <input class="input" min="2020-01-01" max="2050-12-31" type="date" name="end" id="end">
-                                            <small class="is-size-7 has-text-grey">Must be less than 10 years from Begin Date</small>
+                                    <form hx-post="{% url 'tidedata' %}" hx-swap="outerHTML"
+                                        hx-target="#tide-config-response"
+                                        hx-confirm="Please ensure the ethernet cable is plugged in to be able to download NOAA Tide data!">
+                                        <label class="label" for="station">NOAA Station ID</label>
+                                        <input class="input" type="number" name="station" id="station">
+                                        <small class="is-size-7 has-text-grey"><a target="_blank"
+                                                href="https://tidesandcurrents.noaa.gov/map/index.html">via NOAA Tides
+                                                and Currents</a></small>
+                                        <label class="label" for="begin">Begin Date</label>
+                                        <input class="input" min="2020-01-01" max="2050-12-31" type="date" name="begin"
+                                            id="begin">
+                                        <label class="label" for="end">End Date</label>
+                                        <input class="input" min="2020-01-01" max="2050-12-31" type="date" name="end"
+                                            id="end">
+                                        <small class="is-size-7 has-text-grey">Must be less than 10 years from Begin
+                                            Date</small>
                                         <div class="control mt-5 mb-3">
-                                            <button type="submit" class="button is-info is-fullwidth" onclick="tide_loader_toggle()">Submit</button>
+                                            <button type="submit" class="button is-info is-fullwidth"
+                                                onclick="tide_loader_toggle()">Submit</button>
                                         </div>
                                     </form>
                                     <div class="has-text-centered has-text-success" id="tide-config-response">
                                     </div>
-                                  
+
                                     <div class="column is-narrow hidden" id="tide-data-loader">
                                         <div class="darksmallloader"></div>
                                     </div>
-                               
+
                                 </div>
                             </div>
                             <div class="column">
@@ -475,7 +483,8 @@
                                                     <button type="submit"
                                                         class="button is-info is-fullwidth">Submit</button>
                                                 </div>
-                                                <small class="is-size-7">May take up to 2 minutes to update charts</small>
+                                                <small class="is-size-7">May take up to 2 minutes to update
+                                                    charts</small>
                                             </div>
                                             <div class="has-text-centered has-text-success" id="time-config-success">
                                             </div>
@@ -484,21 +493,92 @@
 
                                 </div>
                             </div>
+                            <div class="column">
+                                <div class="box">
+
+                                    <div class="mb-2">
+                                        <i class="fas fa-route has-text-success is-size-6 mr-2"></i><span
+                                            class="subtitle">Saved Tracks</span>
+                                    </div>
+                                    <table class="table is-hoverable has-background-light is-fullwidth">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="fa fa-route has-text-success"></i></th>
+                                                <th>Name</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tracktable">
+                                            <!--
+                                            <tr id="newmarker">
+                                                <form hx-post="{% url 'add_marker'%}" hx-target="#newmarker"
+                                                    hx-encoding="multipart/form-data" hx-swap="afterend swap:1s">
+                                                    <input type="hidden" name="source" value="customize" />
+                                                    <td class="has-text-centered"><i
+                                                            class="fa fa-map-pin has-text-success"></i>
+                                                    </td>
+                                                    <td><input class="input" type="text" name="name" size="15"
+                                                            placeholder="Fishing Spot..."></td>
+                                                    <td><input class="input" type="number" step=".00001" min="-90" max="90"
+                                                            name="latitude" size="7" placeholder="34.589"></td>
+                                                    <td><input class="input" type="number" step=".00001" min="-90" max="90"
+                                                            name="longitude" size="7" placeholder="-78.302"></td>
+                                                    <td><input class="input" type="text" name="caption" size="25"
+                                                            placeholder="Caught monster bass here!"></td>
+                                                    <td><button type="submit" class="button is-light is-small"
+                                                            onclick="remove_marker_table_message()"><i
+                                                                class="fa fa-plus has-text-success"></i></button></td>
+                                                </form>
+                                            </tr>
+                                            -->
+                                            {% for track in saved_tracks %}
+                                            <tr class="remove">
+                                                <td><i class="fa fa-route has-text-grey"></i></td>
+                                                <td>{{track.name}}</td>
+                                                <td><button class="button is-light is-small"
+                                                        hx-post="{% url 'delete_marker' %}"
+                                                        hx-vals='{"name": "{{marker.name}}"}'
+                                                        hx-target="closest .remove" hx-swap="outerHTML swap:0.5s"><i
+                                                            class="fas fa-ban has-text-danger"></i></button>
+
+
+                                                </td>
+                                            </tr>
+                                            {%endfor%}
+                                        </tbody>
+                                    </table>
+
+                                    <form hx-post="{% url 'clear_progress' %}" hx-swap="outerHTML" hx-target="#clear-points-success">
+
+                                        <div class="control mt-5 mb-3">
+                                            <button type="submit" class="button is-warning is-fullwidth">Clear Current Progress</button>
+                                        </div>
+                                    </form>
+                                    <div class="has-text-centered has-text-success" id="clear-points-success">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-
-
-        <!-- Return Button -->
-        <div class="columns is-mobile is-multiline is-centered">
-            <div class="column py-5 is-half has-text-centered">
-                <a href="{% url 'home' %}"><button class="button is-primary is-fullwidth">Return</button></a>
-            </div>
+         <!-- Return Button -->
+    
+    <div class="columns is-mobile is-multiline is-centered">
+        <div class="column py-5 is-half has-text-centered">
+            <a href="{% url 'home' %}"><button class="button is-primary is-fullwidth">Return</button></a>
         </div>
     </div>
+
+    </div>
+
+
+
+
+
+   
 
 
 

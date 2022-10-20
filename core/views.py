@@ -6,15 +6,19 @@ from django.contrib import messages
 from .forms import UploadGeoJSONForm, UploadENCForm
 from .converters import *
 from .tide_scraper import *
-from .models import Marker, MapMode
+from .models import *
+from django.views.decorators.csrf import csrf_exempt
 import uuid
 import os
 import time
+import json
+
 
 
 ### --- Main Views --- ###
 def home(request):
     home_marker, default_marker, custom_markers = get_markers()
+    
     return render(
         request,
         "home.html",
@@ -24,7 +28,8 @@ def home(request):
             "layers": get_layers(),
             "custom_markers": custom_markers,
             "mode": get_mode(),
-            "mode_toggle": get_mode_toggle()
+            "mode_toggle": get_mode_toggle(),
+            "saved_tracks": get_tracks()
         },
     )
 
@@ -66,6 +71,7 @@ def customize(request):
         home_marker = Marker.objects.get(name="home")
         default_marker = Marker.objects.get(name="default")
         markers = Marker.objects.exclude(name="home").exclude(name="default")
+        saved_tracks = Track.objects.all()
     return render(
         request,
         "customize.html",
@@ -75,12 +81,51 @@ def customize(request):
             "home_marker": home_marker,
             "markers": markers,
             "dst": dst,
-            "tz": tz
+            "tz": tz,
+            "saved_tracks": saved_tracks
         },
     )
+
+@csrf_exempt
+def record_track(request):
+    data = json.loads(request.body.decode('utf-8'))
+    model_fields = [field.name for field in TrackPoint._meta.get_fields()]
     
+    record_dict = {}
+    for field in data:
+        if field in model_fields:
+            record_dict[field] = data[field]
+    record = TrackPoint.objects.create(**record_dict)
+
+
+    return render(request, "record_response.html")
 
 ### --- ASYNC Views --- ###
+
+def save_track(request):
+    points = TrackPoint.objects.filter(track_key=None)
+    if points.count() > 0:
+        newtrack = Track.objects.create(name=request.POST["name"], display=True)
+        start = time.time()
+        for point in points:
+           point.track_key = newtrack
+        end = time.time()
+        print(f"TIME :: {end - start}")
+        TrackPoint.objects.bulk_update(points, ['track_key'])
+        response = TemplateResponse(request, "save_track_success.html", {"title":request.POST["name"]})
+        again = time.time()
+        print(f"TIME :: {again - end}")
+    else:
+        response = TemplateResponse(request, "save_track_error.html")
+
+    
+
+    return response
+
+def clear_progress(request):
+    points = TrackPoint.objects.filter(track_key=None).delete()
+    response = TemplateResponse(request, "clear_progress_success.html")
+    return response
 
 def update_tide_data(request):
     if request.method == "POST":
@@ -280,3 +325,12 @@ def get_mode():
 def get_mode_toggle():
     mode = MapMode.objects.get(name="mode")
     return mode.dark
+
+def get_tracks():
+    builder = {}
+    saved_tracks = Track.objects.filter(display=True)
+    for track in saved_tracks:
+        builder[track.name] = custom_track_builder(TrackPoint.objects.filter(track_key=track).values("lat","lon","track_key__name"), track.name)
+
+
+    return builder

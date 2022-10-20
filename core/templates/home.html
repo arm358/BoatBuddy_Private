@@ -45,9 +45,11 @@
         document.getElementById("speed").innerHTML = "";
         if (knots) {
             document.getElementById("speednavvalue").innerHTML = Math.floor(knts);
+            document.getElementById("speed").innerHTML = Math.floor(knts);
             configSpeed.data.current = knts;
         } else {
             document.getElementById("speednavvalue").innerHTML = Math.floor(mph);
+            document.getElementById("speed").innerHTML = Math.floor(mph);
             configSpeed.data.current = mph;
         };
         document.getElementById("direction").innerHTML = direction;
@@ -145,7 +147,10 @@
             <div id='map' class="has-background-main" name="mapboxdiv"></div>
             <div class="current" id="current"></div>
             <div class="home" id="home"></div>
+            <i class="fas fa-refresh is-size-3 has-text-success refresh" onclick="window.location.reload();">
+            </i>
             <div class="dropdown is-up is-right cog" id="dropdown">
+                
                 <div class="dropdown-trigger">
                     <i class="fas fa-cog is-size-3" aria-haspopup="true" aria-controls="dropdown-menu">
                     </i>
@@ -177,6 +182,14 @@
                                         style="color:red"></i>
                                 </div>
                                 <div class="column has-text-weight-semibold">Toggle Route History</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-item has-text-light" onclick="save_track_toggle()">
+                            <div class="columns is-mobile is-vcentered">
+                                <div class="column is-narrow"><i id="route" class="fas fa-route is-size-3"
+                                        style="color:#03fca1"></i>
+                                </div>
+                                <div class="column has-text-weight-semibold">Save Current Track</div>
                             </div>
                         </div>
                         <div class="dropdown-item has-text-light" onclick="location.replace('/customize')">
@@ -226,6 +239,25 @@
                 </div>
 
             </div>
+
+            <div class="add-marker-popup has-text-light has-background-main z3 has-text-right hidden px-2 pb-2"
+                id="save_track">
+                <button class="delete mr-1 mt-1" onclick="save_track_toggle()"></button>
+                <form hx-post="{% url 'save_track'%}" hx-encoding="multipart/form-data" hx-swap="afterend swap:1s" hx-target="#track_added_response">
+                    <input type="hidden" name="source" value="customize" />
+                    <input class="input" type="text" name="name" size="15" placeholder="Track label">
+                    <button type="submit"
+                        class="button is-success is-small is-fullwidth mt-2">Add</button>
+                </form>
+                <div id="track-swap" class="has-text-centered">
+                    <div class="smallloader mt-2 unloaded" id="loading"></div>
+                    <div id="track_added_response"></div>
+                </div>
+            </div>
+
+
+
+
         </div>
 
 
@@ -235,10 +267,12 @@
     var default_marker = {{ default_marker }};
     var home_marker = {{ home_marker }};
     var layers = {{ layers | safe }};
+    var saved_tracks = {{ saved_tracks | safe }};
     var path = "{{assets}}layers/";
     var custom_markers = {{ custom_markers | safe }};
     var dark_mode = {{ mode | safe }};
     var loaded = false;
+
 
     if (dark_mode) {
         var style = "{% static 'core/mapstyles/nighttime/style.json' %}"
@@ -311,6 +345,38 @@
             }
         });
 
+        //add custom saved tracks
+
+        for (track in saved_tracks) {
+            map.addSource(track, {
+                "type": 'geojson',
+                "data": saved_tracks[track]
+            });
+            map.addLayer({
+                'id': track,
+                'type': 'line',
+                'source': track,
+                "paint": {
+                    "line-color": "#03fca1",
+                    'line-width': 3
+                }
+            });
+            map.addLayer({
+                "id": track+"_symbols",
+                "type": "symbol",
+                "source": track,
+
+                "layout": {
+                    'text-field': track,
+                    'text-font': ["Open Sans Regular"],
+                    'symbol-placement': "point",
+                    'text-size': 22
+                },
+
+                "paint": {'text-color': "#03fca1"}
+            });
+        
+        };
 
     });
 
@@ -563,6 +629,7 @@
 
         };
         dark_mode_colors("map");
+        location.reload(); 
     };
 
     map.on('styledata', function () {
@@ -745,7 +812,9 @@
     var toggle = document.getElementById("route");
     var loading = document.getElementById("loading")
     var markeraddedresponse = document.getElementById("marker_added_response")
+    var trackaddedresponse = document.getElementById("track_added_response")
     var pin = document.getElementById("add_pin")
+    var savetrack = document.getElementById("save_track")
     var addpinname = document.getElementById("add_pin_name")
     var addpincaptions = document.getElementById("add_pin_caption")
 
@@ -773,11 +842,15 @@
     // Toggle scripts on buttons
     function loading_toggle() {
         loading.classList.toggle("unloaded");
-        markeraddedresponse.classList.toggle("unloaded")
+        trackaddedresponse.classList.toggle("unloaded")
     };
 
     function pin_toggle() {
         pin.classList.toggle("hidden");
+    }
+
+    function save_track_toggle() {
+        savetrack.classList.toggle("hidden");
     }
 
     function tidetoggle() {
