@@ -197,6 +197,13 @@ def delete_marker(request):
     else:
         return redirect("customize")
 
+def delete_track(request):
+    if request.method == "POST":
+        Track.objects.get(name=request.POST["name"]).delete()
+        return HttpResponse("")
+    else:
+        return redirect("customize")
+
 def delete_file(request):
     if request.method == "POST":
         for root, dirs, files in os.walk("./core/assets/layers/"):
@@ -228,12 +235,23 @@ def update_time_config(request):
 
 def update_map_mode(request):
     if request.method == "POST":
-        mode = MapMode.objects.get(name="mode")
-        current_mode = mode.dark
-        new_mode = False if mode.dark else True
-        mode.dark = new_mode
+        mode = MapMode.objects.get(name="dark")
+        current_mode = mode.value
+        new_mode = False if mode.value else True
+        mode.value = new_mode
         mode.save()
         return TemplateResponse(request, "map_mode.html", {"mode": current_mode})
+    else:
+        return redirect("customize")
+    
+def recording_trigger(request):
+    if request.method == "POST":
+        mode = MapMode.objects.get(name="recording")
+        current_mode = mode.value
+        new_mode = False if mode.value else True
+        mode.value = new_mode
+        mode.save()
+        return HttpResponse("")
     else:
         return redirect("customize")
 
@@ -316,15 +334,22 @@ def handle_uploaded_file(file):
     return directory
 
 def get_mode():
-    mode = MapMode.objects.get(name="mode")
-    if mode.dark == True:
+    mode = MapMode.objects.get(name="dark")
+    if mode.value == True:
+        return "true"
+    else:
+        return "false"
+
+def recording_toggle():
+    recording = MapMode.objects.get(name="recording")
+    if mode.value:
         return "true"
     else:
         return "false"
 
 def get_mode_toggle():
-    mode = MapMode.objects.get(name="mode")
-    return mode.dark
+    mode = MapMode.objects.get(name="dark")
+    return mode.value
 
 def get_tracks():
     builder = {}

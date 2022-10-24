@@ -536,8 +536,8 @@
                                                 <td><i class="fa fa-route has-text-grey"></i></td>
                                                 <td>{{track.name}}</td>
                                                 <td><button class="button is-light is-small"
-                                                        hx-post="{% url 'delete_marker' %}"
-                                                        hx-vals='{"name": "{{marker.name}}"}'
+                                                        hx-post="{% url 'delete_track' %}"
+                                                        hx-vals='{"name": "{{track.name}}"}'
                                                         hx-target="closest .remove" hx-swap="outerHTML swap:0.5s"><i
                                                             class="fas fa-ban has-text-danger"></i></button>
 
