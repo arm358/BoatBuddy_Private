@@ -150,7 +150,7 @@
             <i class="fas fa-refresh is-size-3 has-text-success refresh" onclick="window.location.reload();">
             </i>
             <div class="dropdown is-up is-right cog" id="dropdown">
-                
+
                 <div class="dropdown-trigger">
                     <i class="fas fa-cog is-size-3" aria-haspopup="true" aria-controls="dropdown-menu">
                     </i>
@@ -206,6 +206,7 @@
                                 <div class="column has-text-weight-semibold">Add New Marker</div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -243,17 +244,21 @@
             <div class="add-marker-popup has-text-light has-background-main z3 has-text-right hidden px-2 pb-2"
                 id="save_track">
                 <button class="delete mr-1 mt-1" onclick="save_track_toggle()"></button>
-                <form hx-post="{% url 'save_track'%}" hx-encoding="multipart/form-data" hx-swap="afterend swap:1s" hx-target="#track_added_response">
+                <form hx-post="{% url 'save_track'%}" hx-encoding="multipart/form-data" hx-swap="afterend swap:1s"
+                    hx-target="#track_added_response">
                     <input type="hidden" name="source" value="customize" />
                     <input class="input" type="text" name="name" size="15" placeholder="Track label">
-                    <button type="submit"
-                        class="button is-success is-small is-fullwidth mt-2">Add</button>
+                    <button type="submit" class="button is-success is-small is-fullwidth mt-2">Add</button>
                 </form>
                 <div id="track-swap" class="has-text-centered">
                     <div class="smallloader mt-2 unloaded" id="loading"></div>
                     <div id="track_added_response"></div>
                 </div>
             </div>
+
+
+
+
 
 
 
@@ -362,7 +367,7 @@
                 }
             });
             map.addLayer({
-                "id": track+"_symbols",
+                "id": track + "_symbols",
                 "type": "symbol",
                 "source": track,
 
@@ -373,9 +378,9 @@
                     'text-size': 22
                 },
 
-                "paint": {'text-color': "#03fca1"}
+                "paint": { 'text-color': "#03fca1" }
             });
-        
+
         };
 
     });
@@ -629,7 +634,7 @@
 
         };
         dark_mode_colors("map");
-        location.reload(); 
+        location.reload();
     };
 
     map.on('styledata', function () {

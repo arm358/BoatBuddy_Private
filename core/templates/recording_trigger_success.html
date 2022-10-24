@@ -1,0 +1,17 @@
+{% if recording %}
+<div class="dropdown-item has-text-light">
+    <div class="columns is-mobile is-vcentered">
+        <div class="column is-narrow"><i id="startrecording" class="fas fa-sd-card is-size-3 has-text-warning"></i>
+        </div>
+        <div class="column has-text-weight-semibold">Recording</div>
+    </div>
+</div>
+{% else %}
+<div class="dropdown-item has-text-light" hx-post="{% url 'recording_trigger' %}" hx-swap="outerHTML">
+    <div class="columns is-mobile is-vcentered">
+        <div class="column is-narrow"><i id="startrecording" class="fas fa-sd-card is-size-3 has-text-warning"></i>
+        </div>
+        <div class="column has-text-weight-semibold">Start Recording</div>
+    </div>
+</div>
+{% end if %}

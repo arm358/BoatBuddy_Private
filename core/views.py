@@ -244,17 +244,6 @@ def update_map_mode(request):
     else:
         return redirect("customize")
     
-def recording_trigger(request):
-    if request.method == "POST":
-        mode = MapMode.objects.get(name="recording")
-        current_mode = mode.value
-        new_mode = False if mode.value else True
-        mode.value = new_mode
-        mode.save()
-        return HttpResponse("")
-    else:
-        return redirect("customize")
-
 ### --- Helper Functions --- ###
 def get_markers():
     markers = Marker.objects.exclude(name="home").exclude(name="default").values()
@@ -340,12 +329,8 @@ def get_mode():
     else:
         return "false"
 
-def recording_toggle():
-    recording = MapMode.objects.get(name="recording")
-    if mode.value:
-        return "true"
-    else:
-        return "false"
+
+
 
 def get_mode_toggle():
     mode = MapMode.objects.get(name="dark")

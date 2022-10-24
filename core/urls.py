@@ -4,7 +4,6 @@ from . import views
 urlpatterns = [
     path("", views.home, name="home"),
     path("record/", views.record_track, name="record"),
-    path("recording-trigger/", views.recording_trigger, name="recording_trigger"),
     path("save-track/", views.save_track, name="save_track"),
     path("delete-track/", views.delete_track, name="delete_track"),
     path("clear-progress/", views.clear_progress, name="clear_progress"),
