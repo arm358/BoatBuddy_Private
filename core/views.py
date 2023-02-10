@@ -14,11 +14,10 @@ import time
 import json
 
 
-
 ### --- Main Views --- ###
 def home(request):
     home_marker, default_marker, custom_markers = get_markers()
-    
+
     return render(
         request,
         "home.html",
@@ -29,9 +28,10 @@ def home(request):
             "custom_markers": custom_markers,
             "mode": get_mode(),
             "mode_toggle": get_mode_toggle(),
-            "saved_tracks": get_tracks()
+            "saved_tracks": get_tracks(),
         },
     )
+
 
 def customize(request):
     if request.method == "POST":
@@ -82,50 +82,48 @@ def customize(request):
             "markers": markers,
             "dst": dst,
             "tz": tz,
-            "saved_tracks": saved_tracks
+            "saved_tracks": saved_tracks,
         },
     )
 
+
 @csrf_exempt
 def record_track(request):
-    data = json.loads(request.body.decode('utf-8'))
+    data = json.loads(request.body.decode("utf-8"))
     model_fields = [field.name for field in TrackPoint._meta.get_fields()]
-    
+
     record_dict = {}
     for field in data:
         if field in model_fields:
             record_dict[field] = data[field]
-    record = TrackPoint.objects.create(**record_dict)
-
+    TrackPoint.objects.create(**record_dict)
 
     return render(request, "record_response.html")
 
-### --- ASYNC Views --- ###
 
+### --- ASYNC Views --- ###
+@csrf_exempt
 def save_track(request):
     points = TrackPoint.objects.filter(track_key=None)
     if points.count() > 0:
-        newtrack = Track.objects.create(name=request.POST["name"], display=True)
-        start = time.time()
+        name = None if len(request.POST) == 0 else request.POST["name"]
+        newtrack = Track.objects.create(name=name, display=True)
         for point in points:
-           point.track_key = newtrack
-        end = time.time()
-        print(f"TIME :: {end - start}")
-        TrackPoint.objects.bulk_update(points, ['track_key'])
-        response = TemplateResponse(request, "save_track_success.html", {"title":request.POST["name"]})
-        again = time.time()
-        print(f"TIME :: {again - end}")
+            point.track_key = newtrack
+        TrackPoint.objects.bulk_update(points, ["track_key"])
+        name = name if not None else newtrack.id
+        response = TemplateResponse(request, "save_track_success.html", {"title": name})
     else:
         response = TemplateResponse(request, "save_track_error.html")
 
-    
-
     return response
+
 
 def clear_progress(request):
-    points = TrackPoint.objects.filter(track_key=None).delete()
+    TrackPoint.objects.filter(track_key=None).delete()
     response = TemplateResponse(request, "clear_progress_success.html")
     return response
+
 
 def update_tide_data(request):
     if request.method == "POST":
@@ -136,7 +134,7 @@ def update_tide_data(request):
             begin_date, end_date = clean_dates(begin, end)
             scrape_data(begin_date, end_date, station)
             success = True
-            
+
         except:
             success = False
         response = TemplateResponse(request, "tide_config.html", {"success": success})
@@ -145,9 +143,11 @@ def update_tide_data(request):
     else:
         return redirect("customize")
 
+
 def shutdown(request):
     os.system("sudo shutdown -h now")
     return HttpResponse("")
+
 
 def update_standard_markers(request):
     if request.method == "POST":
@@ -159,6 +159,7 @@ def update_standard_markers(request):
         messages.success(request, f"{name.capitalize()} marker location updated.")
     else:
         redirect("customize")
+
 
 def add_marker(request):
     try:
@@ -190,6 +191,7 @@ def add_marker(request):
             response["HX-Trigger"] = "response"
         return response
 
+
 def delete_marker(request):
     if request.method == "POST":
         Marker.objects.get(name=request.POST["name"]).delete()
@@ -197,12 +199,14 @@ def delete_marker(request):
     else:
         return redirect("customize")
 
+
 def delete_track(request):
     if request.method == "POST":
         Track.objects.get(name=request.POST["name"]).delete()
         return HttpResponse("")
     else:
         return redirect("customize")
+
 
 def delete_file(request):
     if request.method == "POST":
@@ -214,6 +218,7 @@ def delete_file(request):
     else:
         return redirect("customize")
 
+
 def download_file(request, file):
     for root, dirs, files in os.walk("core/assets/layers/"):
         for filename in files:
@@ -222,6 +227,7 @@ def download_file(request, file):
                     open(os.path.join(root, file), "rb"),
                     content_type="application/force-download",
                 )
+
 
 def update_time_config(request):
     if request.method == "POST":
@@ -233,6 +239,7 @@ def update_time_config(request):
     else:
         return redirect("customize")
 
+
 def update_map_mode(request):
     if request.method == "POST":
         mode = MapMode.objects.get(name="dark")
@@ -243,7 +250,8 @@ def update_map_mode(request):
         return TemplateResponse(request, "map_mode.html", {"mode": current_mode})
     else:
         return redirect("customize")
-    
+
+
 ### --- Helper Functions --- ###
 def get_markers():
     markers = Marker.objects.exclude(name="home").exclude(name="default").values()
@@ -256,6 +264,7 @@ def get_markers():
     default_marker = [float(default.longitude), float(default.latitude)]
 
     return home_marker, default_marker, custom_markers
+
 
 def correct_extensions(request, extension):
     extension = extension.lower()
@@ -270,6 +279,7 @@ def correct_extensions(request, extension):
     )
     return correct_extensions
 
+
 def get_layers():
     layers = {}
     for item in sorted(os.listdir("./core/assets/layers")):
@@ -280,6 +290,7 @@ def get_layers():
                     file_list.append(file)
             layers[item] = file_list
     return layers
+
 
 def get_existing_layers():
     mapping = {
@@ -314,6 +325,7 @@ def get_existing_layers():
         sort[item] = layers[item]
     return sort
 
+
 def handle_uploaded_file(file):
     extension = (file.name.split("."))[1]
     directory = f"{os.getcwd()}/core/assets/layers/staging_file.{extension}"
@@ -321,6 +333,7 @@ def handle_uploaded_file(file):
         for chunk in file.chunks():
             destination.write(chunk)
     return directory
+
 
 def get_mode():
     mode = MapMode.objects.get(name="dark")
@@ -330,17 +343,19 @@ def get_mode():
         return "false"
 
 
-
-
 def get_mode_toggle():
     mode = MapMode.objects.get(name="dark")
     return mode.value
+
 
 def get_tracks():
     builder = {}
     saved_tracks = Track.objects.filter(display=True)
     for track in saved_tracks:
-        builder[track.name] = custom_track_builder(TrackPoint.objects.filter(track_key=track).values("lat","lon","track_key__name"), track.name)
-
-
+        builder[track.name] = custom_track_builder(
+            TrackPoint.objects.filter(track_key=track).values(
+                "lat", "lon", "track_key__name"
+            ),
+            track.name,
+        )
     return builder

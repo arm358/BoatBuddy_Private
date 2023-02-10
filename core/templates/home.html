@@ -14,8 +14,9 @@
         console.log('Connection established');
 
     };
-
     let track_history;
+    
+    //get the correct json format for the track history layer (blank)
     fetch("{% static 'core/track_history.json' %}").then(
         function (u) { return u.json(); }
     ).then(
@@ -23,6 +24,7 @@
             track_history = json;
         }
     );
+    
 
 
     socket.onmessage = function (e) {
@@ -84,7 +86,17 @@
     };
 
     socket.onclose = function (e) {
-        alert('Connection Closed');
+
+        /*
+        (async () => {
+            // POST request using fetch with async/await
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            };
+            await fetch('{% url "save_track" %}', requestOptions);
+        })();
+        */
     };
 
 
@@ -277,7 +289,6 @@
     var custom_markers = {{ custom_markers | safe }};
     var dark_mode = {{ mode | safe }};
     var loaded = false;
-
 
     if (dark_mode) {
         var style = "{% static 'core/mapstyles/nighttime/style.json' %}"
@@ -937,7 +948,7 @@
 
 
     };
-
+    //show/hide the total track (from when turned on)
     function route_toggle() {
         if (route === true) {
             route = false;

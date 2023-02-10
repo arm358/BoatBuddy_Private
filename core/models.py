@@ -14,7 +14,7 @@ class MapMode(models.Model):
     value = models.BooleanField()
 
 class Track(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, null=True, blank=True)
     display = models.BooleanField(default=False)
 
 class TrackPoint(models.Model):

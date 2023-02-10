@@ -192,13 +192,10 @@ def get_cardinal(heading, speed):
 #### ------ main loop to read GPS sensor and send over websocket to frontend ------ ####
 while True:
     try: #getting gps data can sometimes be corrupt, so if error then just continue and try to read data again
-        gps.update()
         current = time.monotonic()
-
-        with open("./core/assets/files/timeconfig.json", "r") as timeconfig:
-            data = json.load(timeconfig)
-            dstflag = data["dst"]
-            tz = int(data["timezone"])
+        if current - last_print > 0.33:
+            gps.update()
+        
 
         if current - last_print >= 1.0: #pulls from GPS data every second without a sleep
             start = time.time()
