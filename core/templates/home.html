@@ -151,6 +151,8 @@
 
         <div id="canvas-holder" class="overlaid-tide has-text-centered" name="tidechart" style="display:none;">
             <canvas id="chart-tide" class="mb-0 py-6"></canvas>
+            <i hx-post="{% url 'reboot' %}" hx-confirm="Reboot BoatBuddy?" hx-swap="none"
+                class="power is-size-3 fas fa-power-off has-text-warning" id="reboot"></i>
         </div>
 
         <div id="map-holder" class="" name="mapboxdiv" style="display:none;">

@@ -9,7 +9,7 @@ import numpy as np
 import time
 import adafruit_gps
 from pykalman import KalmanFilter
-import requests
+from threading import Thread
 
 warnings.filterwarnings("ignore")
 
@@ -20,9 +20,8 @@ tides = pd.read_csv("./core/assets/files/tides.csv")
 dst = pd.read_csv("./core/assets/files/dst.csv")
 previous_heading = 1
 track_history = []
-connected = False
 last_print = time.monotonic()
-counter = 100
+counter = 60
 
 #####  -----   Instantiate ----- #####
 """ create websocket """
@@ -51,21 +50,14 @@ def heading_cleanser(heading, speed):
     except:
         return previous_heading
 
-def C_to_F(c):
-    """convert deg C to deg F """
-    f = round(c * (9 / 5) + 32)
-    return f
+
+def knot_conversion(knots, to_units):
+    converstions = {"mph": 1.151, "kph": 1.852}
+    return round(converstions[to_units] * 1.852, 2)
 
 
-def knots_to_mph(knots):
-    """ conver knots to mph """
-    mph = round(knots * 1.151, 2)
-    return mph
-
-def knots_to_kph(knots):
-    """ conver knots to kph """
-    kph = round(knots * 1.852, 2)
-    return kph
+def _gmt_offset(now, dstflag, tz):
+    pass
 
 def gmt_offset(now, dstflag, tz):
     """since GPS time is GMT without daylight savings, converts current time to configured 
@@ -165,6 +157,18 @@ def get_tide_data(now_time):
 
 
 def get_cardinal(heading, speed):
+    global previous_heading
+    heading = int(round(float(heading)))
+    speed = float(speed)
+    heading = heading if speed > 1 else previous_heading
+
+    dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+    ix = round(heading / (360. / len(dirs)))
+    return dirs[ix % len(dirs)]
+
+
+
+def _get_cardinal(heading, speed):
     """a non-optimized way of converting the heading in degrees to cardinal heading"""
     heading = int(round(float(heading)))
     speed = float(speed)
@@ -188,74 +192,84 @@ def get_cardinal(heading, speed):
         cardinal = "NW"
     return cardinal
 
-lat = 39.28744
-lon = -74.57098
-track_history = []
-#### ------ main loop to read GPS sensor and send over websocket to frontend ------ ####
-while True:
-    try: #getting gps data can sometimes be corrupt, so if error then just continue and try to read data again
-        #gps.update()
-        current = time.monotonic()
+
+def update_gps():
+    while True:
+        gps.update()
 
 
-        if current - last_print >= 1.0: #pulls from GPS data every second without a sleep
-            start = time.time()
-            last_print = current
-            #if not gps.has_fix: # ensure we have a fix to satellites
-              #  print("Waiting for fix...")
-             #   continue
-            while not connected: # connect to the websocket
-                try:
-                    ws.connect(wsaddress)
-                    connected = True
-                except:
-                    pass
-            #now = datetime.strptime(f"{gps.timestamp_utc.tm_year} {gps.timestamp_utc.tm_mon} {gps.timestamp_utc.tm_mday} {gps.timestamp_utc.tm_hour} {gps.timestamp_utc.tm_min}", "%Y %m %d %H %M")
-            #ctime = gmt_offset(now, dstflag, tz)
-            if counter % 100 == 0: #only pulls tide data every 100 loops == every 100 seconds
-                counter = 0  
-                with open("./core/assets/files/timeconfig.json", "r") as timeconfig:
-                    data = json.load(timeconfig)
-                    dstflag = data["dst"]
-                    tz = int(data["timezone"])
-                #type, tide_time, heights, times = get_tide_data(ctime)
-            
-            #lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
-            #lat, lon, track_history = gps.latitude, gps.longitude, track_history
-            
-            #this is the data package send over websocket and rendered in the browser
-            lat = lat + 0.0001
-            lon = lon - 0.0001
-            track_history.append([lon, lat])
-            payload = {
-                        "mph": 1,
-                        "knts": 3,
-                        "kph": 3,
-                        "direction": "SE",
-                        "heading": 26,
-                        "depth": 0,
-                        "air": 0,
-                        "humidity": 0,
-                        "time": "11:25",
-                        "tide_type": "H",
-                        "tide_time": "1:30",
-                        "heights": [1,2,4,5,3,2],
-                        "times": ["12:00","1:00","2:00","3:00","4:00","5:00"],
-                        "lat": lat,
-                        "lon": lon,
-                        "track": track_history[:-4]
-            }
-            end = time.time()
-            print(end-start)
-            print(payload)
-            response = requests.post("http://boatbuddy.live/record/", json=payload)
-            ws.send(json.dumps(payload)) #send data over websocket
-            counter += 1 #counter for tide data loop
-    except Exception as e:
-        if e is KeyError:
-            exit
-        else:
-            print(f"error! {e}")
-            connected = False #reset the websocket connection and retry to connect
+def websocket_connect(wsaddress):
+    #connect to websocket
+    connected = False
+    print("==> connecting to websocket")
+    while not connected:
+        try:
+            ws.connect(wsaddress)
+            connected = True
+        except:
+            time.sleep(1)
             continue
+    print("==> websocket established")
+    
+def wait_for_fix():
+    while not gps.has_fix: # ensure we have a fix to satellites
+        print("==> waiting for fix")
+        time.sleep(1)
+    print("==> GPS fix acquired")
+
+
+
+if __name__ == "__main__":
+    
+    #start gps update thread
+    t1 = Thread(target=update_gps)
+    t1.start()
+
+    #connect to websocket
+    websocket_connect(wsaddress)
+
+    #wait for GPS signal fix
+    wait_for_fix()
+
+    #start data loop
+    print("==> data loop starting")
+    while True:
+        time.sleep(1)
+        if counter % 60 == 0: #only pulls tide data every 60 loops == every 60 seconds
+            counter = 0
+            now = datetime.strptime(f"{gps.timestamp_utc.tm_year} {gps.timestamp_utc.tm_mon} {gps.timestamp_utc.tm_mday} {gps.timestamp_utc.tm_hour} {gps.timestamp_utc.tm_min}", "%Y %m %d %H %M")
+            with open("./core/assets/files/timeconfig.json", "r") as timeconfig:
+                data = json.load(timeconfig)
+                dstflag = data["dst"]
+                tz = int(data["timezone"])
+            ctime = gmt_offset(now, dstflag, tz)
+            type, tide_time, heights, times = get_tide_data(ctime)
+        lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
+        heading = heading_cleanser(gps.track_angle_deg, gps.speed_knots)
+        #this is the data package send over websocket and rendered in the browser
+        payload = {
+                    "mph": knot_conversion(float(gps.speed_knots), "mph"),
+                    "knts": round(float(gps.speed_knots),2),
+                    "kph": knot_conversion(float(gps.speed_knots), "kph"),
+                    "direction": get_cardinal(heading, gps.speed_knots),
+                    "heading": heading,
+                    "depth": 0,
+                    "air": 0,
+                    "humidity": 0,
+                    "time": ctime.strftime("%H:%M"),
+                    "tide_type": type,
+                    "tide_time": tide_time,
+                    "heights": heights,
+                    "times": times,
+                    "lat": lat,
+                    "lon": lon,
+                    "track": track_history[:-4],
+                }
+        #print(payload)
+        ws.send(json.dumps(payload)) #send data over websocket
+        counter += 1 #counter for tide data loop
+
+
+
+
 

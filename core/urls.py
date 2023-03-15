@@ -8,6 +8,7 @@ urlpatterns = [
     path("delete-track/", views.delete_track, name="delete_track"),
     path("clear-progress/", views.clear_progress, name="clear_progress"),
     path("shutdown/", views.shutdown, name="shutdown"),
+    path("reboot/", views.reboot, name="reboot"),
     path("customize/", views.customize, name="customize"),
     path("delete/", views.delete_file, name="delete"),
     path("deletemarker/", views.delete_marker, name="delete_marker"),

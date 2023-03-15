@@ -148,6 +148,10 @@ def shutdown(request):
     os.system("sudo shutdown -h now")
     return HttpResponse("")
 
+def reboot(request):
+    os.system("sudo reboot")
+    return HttpResponse("")
+
 
 def update_standard_markers(request):
     if request.method == "POST":

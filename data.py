@@ -27,12 +27,15 @@ counter = 100
 #####  -----   Instantiate ----- #####
 """ create websocket """
 ws = websocket.WebSocket()
-
+print("=> websocket created")
 """ start the serial connection to read GPS data """
 uart = serial.Serial(serialport, baudrate=9600, timeout=10)
+print("=> serial established")
 gps = adafruit_gps.GPS(uart, debug=False)
+print("=> gps connected")
 gps.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
 gps.send_command(b"PMTK220,1000")
+print("=> commands sent")
 
 
 
@@ -191,32 +194,32 @@ def get_cardinal(heading, speed):
 
 #### ------ main loop to read GPS sensor and send over websocket to frontend ------ ####
 while True:
+    gps.update()
     try: #getting gps data can sometimes be corrupt, so if error then just continue and try to read data again
         current = time.monotonic()
-        if current - last_print > 0.33:
-            gps.update()
-        
-
         if current - last_print >= 1.0: #pulls from GPS data every second without a sleep
-            start = time.time()
             last_print = current
+            
             if not gps.has_fix: # ensure we have a fix to satellites
                 print("Waiting for fix...")
                 continue
             while not connected: # connect to the websocket
                 try:
                     ws.connect(wsaddress)
+                    print("=> websocket connected")
                     connected = True
                 except:
+                    print("=> retrying websocket connect")
                     pass
             now = datetime.strptime(f"{gps.timestamp_utc.tm_year} {gps.timestamp_utc.tm_mon} {gps.timestamp_utc.tm_mday} {gps.timestamp_utc.tm_hour} {gps.timestamp_utc.tm_min}", "%Y %m %d %H %M")
-            ctime = gmt_offset(now, dstflag, tz)
+            
             if counter % 100 == 0: #only pulls tide data every 100 loops == every 100 seconds
                 counter = 0  
                 with open("./core/assets/files/timeconfig.json", "r") as timeconfig:
                     data = json.load(timeconfig)
                     dstflag = data["dst"]
                     tz = int(data["timezone"])
+                ctime = gmt_offset(now, dstflag, tz)
                 type, tide_time, heights, times = get_tide_data(ctime)
             
             lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
