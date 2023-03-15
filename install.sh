@@ -23,7 +23,7 @@ sudo unzip tiles.zip -d core/static/core/
 sudo rm tiles.zip
 
 echo "\n${GRE}Updating rc.local for autostart of services...${NC}"
-sudo sed -i '$i \cd home/pi/BoatBuddy\npython3 manage.py runserver boatbuddy.live:80 &\npython3 data.py &\n' /etc/rc.local
+sudo sed -i '$i \cd home/pi/BoatBuddy\npython3 manage.py runserver boatbuddy.live:80 &\npython3 data_threaded.py &\n' /etc/rc.local
 
 echo "\n${GRE}Enabling hardware UART...${NC}"
 sudo raspi-config nonint do_serial 2
