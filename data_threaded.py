@@ -10,6 +10,7 @@ import time
 import adafruit_gps
 from pykalman import KalmanFilter
 from threading import Thread
+import os
 
 warnings.filterwarnings("ignore")
 
@@ -217,6 +218,12 @@ def wait_for_fix():
         time.sleep(1)
     print("==> GPS fix acquired")
 
+def set_system_date():
+    print("==> setting system date from GPS")
+    dt = datetime.fromtimestamp(time.mktime(gps.timestamp_utc))
+    os.system(f"sudo date +'%Y%m%d %H:%M:%S' -u --set '{dt}'")
+    print("==> system date set")
+
 
 
 if __name__ == "__main__":
@@ -231,19 +238,16 @@ if __name__ == "__main__":
     #wait for GPS signal fix
     wait_for_fix()
 
+    #set system date
+    set_system_date()
+
     #start data loop
     print("==> data loop starting")
     while True:
         time.sleep(1)
+        current_time = datetime.now()
         if counter % 60 == 0: #only pulls tide data every 60 loops == every 60 seconds
-            counter = 0
-            now = datetime.strptime(f"{gps.timestamp_utc.tm_year} {gps.timestamp_utc.tm_mon} {gps.timestamp_utc.tm_mday} {gps.timestamp_utc.tm_hour} {gps.timestamp_utc.tm_min}", "%Y %m %d %H %M")
-            with open("./core/assets/files/timeconfig.json", "r") as timeconfig:
-                data = json.load(timeconfig)
-                dstflag = data["dst"]
-                tz = int(data["timezone"])
-            ctime = gmt_offset(now, dstflag, tz)
-            type, tide_time, heights, times = get_tide_data(ctime)
+            type, tide_time, heights, times = get_tide_data(current_time)
         lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
         heading = heading_cleanser(gps.track_angle_deg, gps.speed_knots)
         #this is the data package send over websocket and rendered in the browser
@@ -256,7 +260,7 @@ if __name__ == "__main__":
                     "depth": 0,
                     "air": 0,
                     "humidity": 0,
-                    "time": ctime.strftime("%H:%M"),
+                    "time": current_time.strftime("%H:%M"),
                     "tide_type": type,
                     "tide_time": tide_time,
                     "heights": heights,
