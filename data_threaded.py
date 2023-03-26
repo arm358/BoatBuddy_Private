@@ -220,9 +220,16 @@ def wait_for_fix():
 
 def set_system_date():
     print("==> setting system date from GPS")
-    dt = datetime.fromtimestamp(time.mktime(gps.timestamp_utc))
-    os.system(f"sudo date +'%Y%m%d %H:%M:%S' -u --set '{dt}'")
-    print("==> system date set")
+    date_set = False
+    while not date_set:
+        try:
+            dt = datetime.fromtimestamp(time.mktime(gps.timestamp_utc))
+            os.system(f"sudo date +'%Y%m%d %H:%M:%S' -u --set '{dt}'")
+            date_set = True
+            print("==> system date set")
+        except:
+            print("==> error setting date, trying again")
+            time.sleep(1)
 
 
 
