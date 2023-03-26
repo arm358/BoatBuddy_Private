@@ -1,18 +1,18 @@
-import json
-import websocket
-import random
+from json import dumps
+from websocket import WebSocket
 from datetime import datetime, timedelta
-import serial
+from serial import Serial
 import pandas as pd
-import warnings
+from warnings import filterwarnings
 import numpy as np
 import time
-import adafruit_gps
+from adafruit_gps import GPS
 from pykalman import KalmanFilter
 from threading import Thread
 import os
+from requests import post
 
-warnings.filterwarnings("ignore")
+filterwarnings("ignore")
 
 #####  -----   Global Variables ----- #####
 wsaddress = "ws://boatbuddy.live/ws/data/"
@@ -26,11 +26,11 @@ counter = 60
 
 #####  -----   Instantiate ----- #####
 """ create websocket """
-ws = websocket.WebSocket()
+ws = WebSocket()
 
 """ start the serial connection to read GPS data """
-uart = serial.Serial(serialport, baudrate=9600, timeout=10)
-gps = adafruit_gps.GPS(uart, debug=False)
+uart = Serial(serialport, baudrate=9600, timeout=10)
+gps = GPS(uart, debug=False)
 gps.send_command(b"PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
 gps.send_command(b"PMTK220,1000")
 
@@ -168,32 +168,6 @@ def get_cardinal(heading, speed):
     return dirs[ix % len(dirs)]
 
 
-
-def _get_cardinal(heading, speed):
-    """a non-optimized way of converting the heading in degrees to cardinal heading"""
-    heading = int(round(float(heading)))
-    speed = float(speed)
-    global previous_heading
-    heading = heading if speed > 1 else previous_heading
-    if heading >= 337 or heading <= 23:
-        cardinal = "N"
-    elif heading > 23 and heading < 67:
-        cardinal = "NE"
-    elif heading >= 67 and heading <= 113:
-        cardinal = "E"
-    elif heading > 113 and heading < 157:
-        cardinal = "SE"
-    elif heading >= 157 and heading <= 203:
-        cardinal = "S"
-    elif heading > 203 and heading < 247:
-        cardinal = "SW"
-    elif heading >= 247 and heading <= 293:
-        cardinal = "W"
-    elif heading > 293 and heading < 337:
-        cardinal = "NW"
-    return cardinal
-
-
 def update_gps():
     while True:
         gps.update()
@@ -250,14 +224,22 @@ if __name__ == "__main__":
 
     #start data loop
     print("==> data loop starting")
+
     while True:
+
+        #pause and get current time
         time.sleep(1)
         current_time = datetime.now()
-        if counter % 60 == 0: #only pulls tide data every 60 loops == every 60 seconds
+
+        #get tide data every 60 seconds
+        if counter % 60 == 0:
             type, tide_time, heights, times = get_tide_data(current_time)
+        
+        #cleanse data
         lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
         heading = heading_cleanser(gps.track_angle_deg, gps.speed_knots)
-        #this is the data package send over websocket and rendered in the browser
+
+        #construct payload dict
         payload = {
                     "mph": knot_conversion(float(gps.speed_knots), "mph"),
                     "knts": round(float(gps.speed_knots),2),
@@ -276,9 +258,14 @@ if __name__ == "__main__":
                     "lon": lon,
                     "track": track_history[:-4],
                 }
-        #print(payload)
-        ws.send(json.dumps(payload)) #send data over websocket
-        counter += 1 #counter for tide data loop
+        
+        #send payload for recording
+        post("http://boatbuddy.live/record/", json=payload)
+
+        #send payload to frontend
+        ws.send(dumps(payload))
+
+        counter += 1
 
 
 
