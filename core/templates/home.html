@@ -9,13 +9,11 @@
     let coupled = true;
     let route = true;
     let knots = true;
-    let socket = new WebSocket('ws://boatbuddy.live/ws/data/');
-    socket.onopen = function (e) {
-        console.log('Connection established');
+    let socket_main = new WebSocket('ws://boatbuddy.live/ws/data/');
+    let socket_pico = new WebSocket('ws://boatbuddy.live/ws/pico/');
 
-    };
     let track_history;
-    
+
     //get the correct json format for the track history layer (blank)
     fetch("{% static 'core/track_history.json' %}").then(
         function (u) { return u.json(); }
@@ -24,10 +22,10 @@
             track_history = json;
         }
     );
-    
 
 
-    socket.onmessage = function (e) {
+
+    socket_main.onmessage = function (e) {
         //console.log(e.data);
 
         var recData = JSON.parse(e.data);
@@ -36,7 +34,6 @@
         var kph = recData.kph;
         var direction = recData.direction;
         var heading = recData.heading;
-        var depth = recData.depth;
         var tide_type = recData.tide_type;
         var tide_time = recData.tide_time;
         var times = recData.times;
@@ -61,7 +58,6 @@
         document.getElementById("dirarrow").style.transform = "rotate(" + heading + "deg)";
         document.getElementById("add_pin_lat").value = lat;
         document.getElementById("add_pin_lon").value = lon;
-
         speedchartbase.update();
 
         tidedata['data']["labels"] = times;
@@ -83,23 +79,17 @@
         document.getElementById("add_pin_lat").value = lat;
         document.getElementById("add_pin_lon").value = lon;
 
+
     };
 
-    socket.onclose = function (e) {
+    socket_pico.onmessage = function (e) {
+        var picoData = JSON.parse(e.data);
+        var rpm = picoData.rpm;
+        var hrs = picoData.hrs;
 
-        /*
-        (async () => {
-            // POST request using fetch with async/await
-            const requestOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-            };
-            await fetch('{% url "save_track" %}', requestOptions);
-        })();
-        */
-    };
-
-
+        document.getElementById("hrs").innerHTML = hrs;
+        document.getElementById("rpm").innerHTML = rpm;
+    }
 </script>
 
 
@@ -107,14 +97,23 @@
 <body class="has-background-main" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
     <div class="container">
-
+        <div class="rpm is-size-1 has-text-weight-semibold has-text-light" id="rpm" style="font-family:Orbitron">6666
+        </div>
+        <div class="rpmtext is-size-8 has-text-weight-semibold has-text-light" id="rpmtext"
+            style="font-family:Orbitron">rpm</div>
+        <div class="mph is-size-1 has-text-weight-semibold has-text-light" id="speed" style="font-family:Orbitron">44
+        </div>
+        <div class="mphtext is-size-8 has-text-weight-semibold has-text-light" id="speedtext"
+            style="font-family:Orbitron">MPH</div>
+        <i hx-post="{% url 'shutdown' %}" hx-confirm="Shut down BoatBuddy?" hx-swap="none"
+            class="power is-size-3 fas fa-power-off has-text-danger" id="power"></i>
         <div class="columns is-mobile is-gapless mb-0 z1 is-full">
 
             <div class="column is-narrow">
                 <div id="tide" onclick="tidetoggle()">
-                    <span><i class="fas fa-arrows-alt-v has-text-link is-size-3 ml-2"></i></span>
-                    <span id="tide_type" class="is-size-3 has-text-weight-bold has-text-light pl-2">H</span>
-                    <span id="tide_time" class="is-size-3 has-text-weight-bold has-text-light pl-2"> 06:53</span>
+                    <span><i class="fas fa-arrows-alt-v has-text-link is-size-6 ml-2"></i></span>
+                    <span id="tide_type" class="is-size-6 has-text-weight-bold has-text-light pl-2">H</span>
+                    <span id="tide_time" class="is-size-6 has-text-weight-bold has-text-light pl-2"> 06:53</span>
                 </div>
                 <div id="speednav" onclick="tidetoggle()" style="display: none;">
                     <span><i class="fas fa-tachometer-alt has-text-primary ml-2 is-size-3"></i></span>
@@ -124,7 +123,9 @@
             </div>
 
             <div class="column has-text-centered is-centered">
-
+                <i class="fas fa-clock has-text-primary ml-2 is-size-6"></i>
+                <span class="is-size-6 has-text-weight-bold has-text-light" style="font-family:Orbitron"
+                    id="hrs">9999</span>
             </div>
 
 
@@ -135,18 +136,17 @@
                     <span class="is-size-3 has-text-weight-bold has-text-light" id="heading">110</span><span id="degree"
                         class="has-text-light has-text-weight-bold is-size-3">° </span>
                     <span class="is-size-3 has-text-weight-bold has-text-light mr-2" id="direction">N</span>
-                    <span><i class="far fa-compass has-text-info mr-2 is-size-3"></i></span>
+
                 </div>
             </div>
         </div>
 
-        <div id="canvas-holder" class="overlaid" name="speedchart">
-            <div class="mph" id="speed">
-                0
+
+
+        <div id="canvas-holder" class="overlaid" name="speedchart" style="overflow:hidden">
+            <div class="speedo">
+                <canvas id="chart-speed" onclick="speed_unit_toggle()" class=""></canvas>
             </div>
-            <canvas id="chart-speed" onclick="speed_unit_toggle()" class=""></canvas>
-            <i hx-post="{% url 'shutdown' %}" hx-confirm="Shut down BoatBuddy?" hx-swap="none"
-                class="power is-size-3 fas fa-power-off has-text-danger" id="power"></i>
         </div>
 
         <div id="canvas-holder" class="overlaid-tide has-text-centered" name="tidechart" style="display:none;">
@@ -157,12 +157,15 @@
 
         <div id="map-holder" class="" name="mapboxdiv" style="display:none;">
 
-
             <div id='map' class="has-background-main" name="mapboxdiv"></div>
             <div class="current" id="current"></div>
             <div class="home" id="home"></div>
             <i class="fas fa-refresh is-size-3 has-text-success refresh" onclick="window.location.reload();">
             </i>
+            <i id="lock" onclick="couple_toggle()" class="fas fa-lock has-text-dark lock is-size-3"></i>
+            <i id="unlock" onclick="couple_toggle()" class="fas fa-unlock has-text-success lock is-size-3"
+                style="display:none;"></i>
+
             <div class="dropdown is-up is-right cog" id="dropdown">
 
                 <div class="dropdown-trigger">
@@ -224,9 +227,7 @@
                     </div>
                 </div>
             </div>
-            <i id="lock" onclick="couple_toggle()" class="fas fa-lock has-text-dark lock is-size-3"></i>
-            <i id="unlock" onclick="couple_toggle()" class="fas fa-unlock has-text-success lock is-size-3"
-                style="display:none;"></i>
+
 
             <div class="add-marker-popup has-text-light has-background-main z3 has-text-right hidden" id="add_pin">
                 <button class="delete mr-1 mt-1" onclick="pin_toggle()"></button>
@@ -647,7 +648,7 @@
 
         };
         dark_mode_colors("map");
-S
+        S
     };
 
     map.on('styledata', function () {
@@ -689,7 +690,7 @@ S
             "current": 0,
         },
         "options": {
-            responsive: true,
+            responsive: false,
             "panel": {
                 "min": 0,
                 "max": 40,
@@ -742,7 +743,6 @@ S
 
     var ctx = document.getElementById('chart-speed').getContext('2d');
     var speedchartbase = new Chart(ctx, configSpeed);
-
 
 
 
@@ -823,8 +823,9 @@ S
     var dirarrow = document.getElementById("dirarrow");
     var direction = document.getElementById("direction");
     var heading = document.getElementById("heading");
+    var hrs = document.getElementById("hrs");
     var speednavvalue = document.getElementById("speednavvalue");
-    var speed = document.getElementById("speed");
+
     var unlock = document.getElementById("unlock");
     var lock = document.getElementById("lock");
     var toggle = document.getElementById("route");
@@ -835,6 +836,10 @@ S
     var savetrack = document.getElementById("save_track")
     var addpinname = document.getElementById("add_pin_name")
     var addpincaptions = document.getElementById("add_pin_caption")
+    var mphval = document.getElementById("speed")
+    var mphtext = document.getElementById("speedtext")
+    var rpmval = document.getElementById("rpm")
+    var rpmtext = document.getElementById("rpmtext")
 
     window.addEventListener("orientationchange", function (event) {
         map.resize()
@@ -903,6 +908,13 @@ S
             direction.classList.add("has-text-light");
             heading.classList.add("has-text-light");
             speednavvalue.classList.add("has-text-light");
+            hrs.classList.add("has-text-light")
+            mphval.classList.add("has-text-light")
+            mphtext.classList.add("has-text-light")
+            rpmval.classList.add("has-text-light")
+            rpmtext.classList.add("has-text-light")
+
+
         } else {
             tide_type.classList.add("has-text-dark");
             tide_time.classList.add("has-text-dark");
@@ -918,7 +930,11 @@ S
             direction.classList.remove("has-text-light");
             heading.classList.remove("has-text-light");
             speednavvalue.classList.remove("has-text-light");
-            speed.style.display = "none";
+            hrs.classList.remove("has-text-light")
+            mphval.classList.remove("has-text-light")
+            mphtext.classList.remove("has-text-light")
+            rpmval.classList.remove("has-text-light")
+            rpmtext.classList.remove("has-text-light")
         }
     };
 
@@ -941,10 +957,10 @@ S
         if (coupled === true) {
             coupled = false;
             lock.style.display = "none";
-            unlock.style.display = "inline";
+            unlock.style.display = "inline-block";
         } else {
             coupled = true;
-            lock.style.display = "inline";
+            lock.style.display = "inline-block";
             unlock.style.display = "none";
         }
 

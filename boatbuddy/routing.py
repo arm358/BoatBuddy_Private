@@ -5,6 +5,7 @@ from core import consumers
 
 websocket_urlpattern = [
     path("ws/data/", consumers.DashboardConsumer.as_asgi()),
+    path("ws/pico/", consumers.PicoConsumer.as_asgi())
 ]
 
 application = ProtocolTypeRouter({"websocket": URLRouter(websocket_urlpattern)})

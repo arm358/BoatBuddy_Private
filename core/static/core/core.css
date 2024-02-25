@@ -10,15 +10,28 @@ body {
     height: 100vh;
 }
 canvas{
-  height: 100vh;
+  height: 40vh;
 }
 select {
   overflow-y: auto;
 }
 .overlaid {
-  height:100%;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%);
   width:100%;
+  height:100%
 }
+
+.speedo {
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%);
+
+}
+
 .overlaid-tide {
   width:100%;
   height:100%;
@@ -55,27 +68,44 @@ select {
 
 /* Buttons on Map HUD */
 
-.mph {
-    width: 100%; 
-    height: 40px; 
-    position: absolute; 
-    top: 50%; 
-    left: 0; 
-    margin-top: 100px; 
-    line-height:19px; 
-    text-align: center; 
-    font-size: 50px;
-    color:red;
-    font-weight:bolder;
-    font-family:Orbitron;
+.mph{
+  position: absolute; 
+  left:15%;
+  bottom:4%;
+  text-align: center; 
+  z-index: 999;
+  transform: translateX(-50%);
+}
+.mphtext{
+  position: absolute; 
+  left:15%;
+  bottom:2%;
+  text-align: center; 
+  z-index: 999;
+  transform: translateX(-50%);
 }
 .lock {
   position: absolute; 
-  left:3%;
-  bottom:4%;
+  right:15px;
+  bottom:25%;
   text-align: left; 
   z-index: 999;
-  color: red;
+}
+.rpm{
+  position: absolute; 
+  left:50%;
+  bottom:4%;
+  text-align: center; 
+  z-index: 999;
+  transform: translateX(-50%);
+}
+.rpmtext{
+  position: absolute; 
+  left:50%;
+  bottom:2%;
+  text-align: center; 
+  z-index: 999;
+  transform: translateX(-50%);
 }
 .power {
   position: absolute; 
@@ -94,8 +124,8 @@ select {
 }
 .refresh {
   position: absolute; 
-  right:65px;
-  bottom:4%;
+  right:15px;
+  bottom:14%;
   text-align: right; 
   z-index: 999;
   color:#03fca1;
@@ -297,6 +327,7 @@ select {
 .z3 {
   z-index:3;
   position: absolute;
+  width:100%;
 }
 
 /* Chart formatting on orientation change */

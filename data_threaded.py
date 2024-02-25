@@ -233,6 +233,7 @@ if __name__ == "__main__":
 
         #get tide data every 60 seconds
         if counter % 60 == 0:
+            counter = 0
             type, tide_time, heights, times = get_tide_data(current_time)
         
         #cleanse data
@@ -246,9 +247,6 @@ if __name__ == "__main__":
                     "kph": knot_conversion(float(gps.speed_knots), "kph"),
                     "direction": get_cardinal(heading, gps.speed_knots),
                     "heading": heading,
-                    "depth": 0,
-                    "air": 0,
-                    "humidity": 0,
                     "time": current_time.strftime("%H:%M"),
                     "tide_type": type,
                     "tide_time": tide_time,
