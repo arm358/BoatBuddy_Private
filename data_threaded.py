@@ -11,6 +11,7 @@ from pykalman import KalmanFilter
 from threading import Thread
 import os
 from requests import post
+import RPi.GPIO as GPIO
 
 filterwarnings("ignore")
 
@@ -21,10 +22,16 @@ tides = pd.read_csv("./core/assets/files/tides.csv")
 dst = pd.read_csv("./core/assets/files/dst.csv")
 previous_heading = 1
 track_history = []
-last_print = time.monotonic()
 counter = 60
+GPIO_PIN_IN = 26
+STALL_TIME = 30 #in minutes
 
 #####  -----   Instantiate ----- #####
+""" set up GPIO """
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(GPIO_PIN_IN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+
 """ create websocket """
 ws = WebSocket()
 
@@ -55,10 +62,6 @@ def heading_cleanser(heading, speed):
 def knot_conversion(knots, to_units):
     converstions = {"mph": 1.151, "kph": 1.852}
     return round(converstions[to_units] * 1.852, 2)
-
-
-def _gmt_offset(now, dstflag, tz):
-    pass
 
 def gmt_offset(now, dstflag, tz):
     """since GPS time is GMT without daylight savings, converts current time to configured 
@@ -205,6 +208,25 @@ def set_system_date():
             print("==> error setting date, trying again")
             time.sleep(1)
 
+def power_watcher():
+    print("==> power watcher starting")
+    while True:
+        state = GPIO.input(GPIO_PIN_IN)
+        if state == 0:
+            continue
+        else:
+            print(f"==> key off, shutting down in {STALL_TIME} minutes")
+            time.sleep(STALL_TIME*60)
+            state = GPIO.input(GPIO_PIN_IN)
+            if state == 0:
+                print("==> key on, continuing")
+                continue
+            else:
+                print("==> system shutdown")
+                os.system("sudo shutdown -h now")
+        time.sleep(1)
+
+
 
 
 if __name__ == "__main__":
@@ -212,6 +234,10 @@ if __name__ == "__main__":
     #start gps update thread
     t1 = Thread(target=update_gps)
     t1.start()
+
+    #start power watcher
+    t2 = Thread(target=power_watcher)
+    t2.start()
 
     #connect to websocket
     websocket_connect(wsaddress)
