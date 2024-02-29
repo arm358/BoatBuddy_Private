@@ -23,7 +23,7 @@ sudo unzip tiles.zip -d core/static/core/
 sudo rm tiles.zip
 
 echo "\n${GRE}Updating rc.local for autostart of services...${NC}"
-sudo sed -i '$i \cd home/pi/BoatBuddy\npython3 manage.py runserver boatbuddy.live:80 &\npython3 data_threaded.py > /home/pi/log.txt 2>&1&\n' /etc/rc.local
+sudo sed -i '$i \cd home/pi/BoatBuddy\npython3 manage.py runserver boatbuddy.live:80 &\npython3 data_threaded.py > /home/pi/looplog.txt 2>&1 &\npython3 power_watcher.py > /home/pi/powerlog.txt 2>&1' /etc/rc.local
 
 echo "\n${GRE}Updating config.txt to set GPIO pin high/low for relay...${NC}"
 sudo sed -i '$a dtoverlay=gpio-poweroff,gpiopin=21,active_low="y"' /boot/config.txt
