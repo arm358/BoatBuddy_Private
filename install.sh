@@ -26,7 +26,7 @@ echo "\n${GRE}Updating rc.local for autostart of services...${NC}"
 sudo sed -i '$i \cd home/pi/BoatBuddy\npython3 manage.py runserver boatbuddy.live:80 &\npython3 data_threaded.py > /home/pi/looplog.txt 2>&1 &\npython3 power_watcher.py > /home/pi/powerlog.txt 2>&1' /etc/rc.local
 
 echo "\n${GRE}Updating config.txt to set GPIO pin high/low for relay...${NC}"
-sudo sed -i '$a dtoverlay=gpio-poweroff,gpiopin=21,active_low="y"' /boot/config.txt
+sudo sed -i '$a dtoverlay=gpio-poweroff,gpiopin=16,active_low="y"' /boot/config.txt
 
 echo "\n${GRE}Enabling hardware UART...${NC}"
 sudo raspi-config nonint do_serial 2

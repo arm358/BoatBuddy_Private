@@ -92,7 +92,6 @@ class PicoConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def receive(self, text_data):
-        print("pico received")
         text_data_json = json.loads(text_data)
         rpm = text_data_json["rpm"]
         hrs = text_data_json["hrs"]
@@ -112,7 +111,6 @@ class PicoConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def data_pusher(self, event):
-        print(f"pico pushed {datetime.datetime.now()}")
         rpm = event["rpm"]
         hrs = event["hrs"]
 

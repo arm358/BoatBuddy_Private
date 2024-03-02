@@ -53,9 +53,9 @@ def heading_cleanser(heading, speed):
         return previous_heading
 
 
-def knot_conversion(knots, to_units):
-    converstions = {"mph": 1.151, "kph": 1.852}
-    return round(converstions[to_units] * 1.852, 2)
+def speed_converter(knots, to_units):
+    convert = {"mph": 1.151, "kph": 1.852}
+    return round(knots * convert[to_units], 2)
 
 def gmt_offset(now, dstflag, tz):
     """since GPS time is GMT without daylight savings, converts current time to configured 
@@ -154,15 +154,11 @@ def get_tide_data(now_time):
     return (type, tide_time, heights, times)
 
 
-def get_cardinal(heading, speed):
-    global previous_heading
-    heading = int(round(float(heading)))
-    speed = float(speed)
-    heading = heading if speed > 1 else previous_heading
-
+def get_cardinal(heading):
     dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-    ix = round(heading / (360. / len(dirs)))
-    return dirs[ix % len(dirs)]
+    length = len(dirs)
+    ix = round(heading / (360. / length))
+    return dirs[ix % length]
 
 
 def update_gps():
@@ -227,46 +223,47 @@ if __name__ == "__main__":
     print("==> data loop starting")
 
     while True:
-
-        #pause and get current time
         time.sleep(1)
+        #pause and get current time
         current_time = datetime.now()
+        if ws.connected:
 
-        #get tide data every 60 seconds
-        if counter % 60 == 0:
-            counter = 0
-            type, tide_time, heights, times = get_tide_data(current_time)
-        
-        #cleanse data
-        lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
-        heading = heading_cleanser(gps.track_angle_deg, gps.speed_knots)
+            #get tide data every 60 seconds
+            if counter % 60 == 0:
+                counter = 0
+                type, tide_time, heights, times = get_tide_data(current_time)
+            
+            #cleanse data
+            lat, lon, track_history = gps_converter(gps.latitude, gps.longitude, track_history)
+            heading = heading_cleanser(gps.track_angle_deg, gps.speed_knots)
 
-        #construct payload dict
-        payload = {
-                    "mph": knot_conversion(float(gps.speed_knots), "mph"),
-                    "knts": round(float(gps.speed_knots),2),
-                    "kph": knot_conversion(float(gps.speed_knots), "kph"),
-                    "direction": get_cardinal(heading, gps.speed_knots),
-                    "heading": heading,
-                    "time": current_time.strftime("%H:%M"),
-                    "tide_type": type,
-                    "tide_time": tide_time,
-                    "heights": heights,
-                    "times": times,
-                    "lat": lat,
-                    "lon": lon,
-                    "track": track_history[:-4],
-                }
-        
-        #send payload for recording
-        post("http://boatbuddy.live/record/", json=payload)
+            #construct payload dict
+            payload = {
+                        "mph": speed_converter(float(gps.speed_knots), "mph"),
+                        "knts": round(float(gps.speed_knots),2),
+                        "kph": speed_converter(float(gps.speed_knots), "kph"),
+                        "direction": get_cardinal(heading),
+                        "heading": heading,
+                        "time": current_time.strftime("%H:%M"),
+                        "tide_type": type,
+                        "tide_time": tide_time,
+                        "heights": heights,
+                        "times": times,
+                        "lat": lat,
+                        "lon": lon,
+                        "track": track_history[:-4],
+                    }
+            
+            #send payload for recording
+            post("http://boatbuddy.live/record/", json=payload)
 
-        #send payload to frontend
-        ws.send(dumps(payload))
+            #send payload to frontend
+            ws.send(dumps(payload))
 
-        counter += 1
+            counter += 1
 
-
+        else:
+            websocket_connect()
 
 
 
