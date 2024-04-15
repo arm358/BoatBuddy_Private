@@ -108,6 +108,7 @@ select {
   transform: translateX(-50%);
 }
 .power {
+  z-index: 999;
   position: absolute; 
   right:3%;
   bottom:4%;

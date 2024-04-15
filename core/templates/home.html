@@ -105,8 +105,6 @@
         </div>
         <div class="mphtext is-size-8 has-text-weight-semibold has-text-light" id="speedtext"
             style="font-family:Orbitron">MPH</div>
-        <i hx-post="{% url 'shutdown' %}" hx-confirm="Shut down BoatBuddy?" hx-swap="none"
-            class="power is-size-3 fas fa-power-off has-text-danger" id="power"></i>
         <div class="columns is-mobile is-gapless mb-0 z1 is-full">
 
             <div class="column is-narrow">
@@ -193,6 +191,15 @@
                             </div>
                         </div>
                         {% endif %}
+                        <div class="dropdown-item has-text-light" hx-post="{% url 'shutdown' %}" hx-confirm="Shut down BoatBuddy?" hx-swap="none">
+                            <div class="columns is-mobile is-vcentered">
+                                <div class="column is-narrow">
+                                    <i class="is-size-3 fas fa-power-off has-text-danger" id="power" style="color: red"></i>
+                                </div>
+                                <div class="column has-text-weight-semibold">Shutdown</div>
+                            </div>
+                        </div>
+                        
                         <div class="dropdown-item has-text-light" onclick="route_toggle()">
                             <div class="columns is-mobile is-vcentered">
                                 <div class="column is-narrow"><i id="route" class="fas fa-route is-size-3"
