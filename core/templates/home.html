@@ -10,7 +10,6 @@
     let route = true;
     let knots = true;
     let socket_main = new WebSocket('ws://boatbuddy.live/ws/data/');
-    let socket_pico = new WebSocket('ws://boatbuddy.live/ws/pico/');
 
     let track_history;
 
@@ -81,15 +80,6 @@
 
 
     };
-
-    socket_pico.onmessage = function (e) {
-        var picoData = JSON.parse(e.data);
-        var rpm = picoData.rpm;
-        var hrs = picoData.hrs;
-
-        document.getElementById("hrs").innerHTML = hrs;
-        document.getElementById("rpm").innerHTML = rpm;
-    }
 </script>
 
 
@@ -97,10 +87,6 @@
 <body class="has-background-main" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
     <div class="container">
-        <div class="rpm is-size-1 has-text-weight-semibold has-text-light" id="rpm" style="font-family:Orbitron">6666
-        </div>
-        <div class="rpmtext is-size-8 has-text-weight-semibold has-text-light" id="rpmtext"
-            style="font-family:Orbitron">rpm</div>
         <div class="mph is-size-1 has-text-weight-semibold has-text-light" id="speed" style="font-family:Orbitron">44
         </div>
         <div class="mphtext is-size-8 has-text-weight-semibold has-text-light" id="speedtext"
@@ -122,8 +108,7 @@
 
             <div class="column has-text-centered is-centered">
                 <i class="fas fa-clock has-text-primary ml-2 is-size-6"></i>
-                <span class="is-size-6 has-text-weight-bold has-text-light" style="font-family:Orbitron"
-                    id="hrs">9999</span>
+
             </div>
 
 
@@ -830,7 +815,6 @@
     var dirarrow = document.getElementById("dirarrow");
     var direction = document.getElementById("direction");
     var heading = document.getElementById("heading");
-    var hrs = document.getElementById("hrs");
     var speednavvalue = document.getElementById("speednavvalue");
 
     var unlock = document.getElementById("unlock");
@@ -845,8 +829,7 @@
     var addpincaptions = document.getElementById("add_pin_caption")
     var mphval = document.getElementById("speed")
     var mphtext = document.getElementById("speedtext")
-    var rpmval = document.getElementById("rpm")
-    var rpmtext = document.getElementById("rpmtext")
+
 
     window.addEventListener("orientationchange", function (event) {
         map.resize()
@@ -915,11 +898,9 @@
             direction.classList.add("has-text-light");
             heading.classList.add("has-text-light");
             speednavvalue.classList.add("has-text-light");
-            hrs.classList.add("has-text-light")
             mphval.classList.add("has-text-light")
             mphtext.classList.add("has-text-light")
-            rpmval.classList.add("has-text-light")
-            rpmtext.classList.add("has-text-light")
+
 
 
         } else {
@@ -937,11 +918,9 @@
             direction.classList.remove("has-text-light");
             heading.classList.remove("has-text-light");
             speednavvalue.classList.remove("has-text-light");
-            hrs.classList.remove("has-text-light")
             mphval.classList.remove("has-text-light")
             mphtext.classList.remove("has-text-light")
-            rpmval.classList.remove("has-text-light")
-            rpmtext.classList.remove("has-text-light")
+
         }
     };
 
