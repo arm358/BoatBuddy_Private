@@ -184,6 +184,14 @@
                                 <div class="column has-text-weight-semibold">Shutdown</div>
                             </div>
                         </div>
+                        <div class="dropdown-item has-text-light" hx-post="{% url 'reboot' %}" hx-swap="none">
+                            <div class="columns is-mobile is-vcentered">
+                                <div class="column is-narrow">
+                                    <i class="is-size-3 fas fa-power-off has-text-warning" id="power"></i>
+                                </div>
+                                <div class="column has-text-weight-semibold">Reboot</div>
+                            </div>
+                        </div>
                         
                         <div class="dropdown-item has-text-light" onclick="route_toggle()">
                             <div class="columns is-mobile is-vcentered">
